@@ -1,211 +1,165 @@
+// Initialize a Vue instance to manage the Mini Player UI and logic
 new Vue({
-  el: "#app",
+  el: "#app", // Bind Vue to the DOM element with id="app"
   data() {
+    // Reactive data properties for the player
     return {
-      audio: null,
-      circleLeft: null,
-      barWidth: null,
-      duration: null,
-      currentTime: null,
-      isTimerPlaying: false,
-      tracks: [
-        {
-          name: "Mekanın Sahibi",
-          artist: "Norm Ender",
-          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/1.jpg",
-          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/1.mp3",
-          url: "https://www.youtube.com/watch?v=z3wAjJXbYzA",
-          favorited: false
-        },
-        {
-          name: "Everybody Knows",
-          artist: "Leonard Cohen",
-          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/2.jpg",
-          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/2.mp3",
-          url: "https://www.youtube.com/watch?v=Lin-a2lTelg",
-          favorited: true
-        },
-        {
-          name: "Extreme Ways",
-          artist: "Moby",
-          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/3.jpg",
-          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/3.mp3",
-          url: "https://www.youtube.com/watch?v=ICjyAe9S54c",
-          favorited: false
-        },
-        {
-          name: "Butterflies",
-          artist: "Sia",
-          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/4.jpg",
-          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/4.mp3",
-          url: "https://www.youtube.com/watch?v=kYgGwWYOd9Y",
-          favorited: false
-        },
-        {
-          name: "The Final Victory",
-          artist: "Haggard",
-          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/5.jpg",
-          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/5.mp3",
-          url: "https://www.youtube.com/watch?v=0WlpALnQdN8",
-          favorited: true
-        },
-        {
-          name: "Genius ft. Sia, Diplo, Labrinth",
-          artist: "LSD",
-          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/6.jpg",
-          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/6.mp3",
-          url: "https://www.youtube.com/watch?v=HhoATZ1Imtw",
-          favorited: false
-        },
-        {
-          name: "The Comeback Kid",
-          artist: "Lindi Ortega",
-          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/7.jpg",
-          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/7.mp3",
-          url: "https://www.youtube.com/watch?v=me6aoX0wCV8",
-          favorited: true
-        },
-        {
-          name: "Overdose",
-          artist: "Grandson",
-          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/8.jpg",
-          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/8.mp3",
-          url: "https://www.youtube.com/watch?v=00-Rl3Jlx-o",
-          favorited: false
-        },
-        {
-          name: "Rag'n'Bone Man",
-          artist: "Human",
-          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/9.jpg",
-          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/9.mp3",
-          url: "https://www.youtube.com/watch?v=L3wKzyIN1yk",
-          favorited: false
-        }
-      ],
-      currentTrack: null,
-      currentTrackIndex: 0,
-      transitionName: null
+      audio: null, // Audio element for playback
+      circleLeft: null, // Unused in this version (placeholder for progress circle)
+      barWidth: null, // Progress bar width (in percentage)
+      duration: "00:00", // Total track duration
+      currentTime: "00:00", // Current playback position
+      isTimerPlaying: false, // Tracks play/pause state
+      tracks: [], // Array of track objects
+      currentTrack: null, // Current track object
+      currentTrackIndex: 0, // Index of the current track
+      transitionName: null, // Transition effect for track changes
+      audioError: null // Stores audio-related error messages
     };
   },
   methods: {
+    // Toggle play/pause state of the audio
     play() {
       if (this.audio.paused) {
-        this.audio.play();
+        this.audio.play().catch((e) => {
+          console.error("Playback failed:", e);
+          this.audioError = "Failed to play audio.";
+        });
         this.isTimerPlaying = true;
       } else {
         this.audio.pause();
         this.isTimerPlaying = false;
       }
     },
+    // Convert seconds to MM:SS format
+    formatTime(seconds) {
+      if (isNaN(seconds)) return "00:00";
+      const min = Math.floor(seconds / 60);
+      const sec = Math.floor(seconds % 60);
+      return `${min < 10 ? "0" + min : min}:${sec < 10 ? "0" + sec : sec}`;
+    },
+    // Update duration and current time displays
     generateTime() {
-      let width = (100 / this.audio.duration) * this.audio.currentTime;
+      this.duration = this.formatTime(this.audio.duration);
+      this.currentTime = this.formatTime(this.audio.currentTime);
+      const width = (100 / this.audio.duration) * this.audio.currentTime;
       this.barWidth = width + "%";
       this.circleLeft = width + "%";
-      let durmin = Math.floor(this.audio.duration / 60);
-      let dursec = Math.floor(this.audio.duration - durmin * 60);
-      let curmin = Math.floor(this.audio.currentTime / 60);
-      let cursec = Math.floor(this.audio.currentTime - curmin * 60);
-      if (durmin < 10) {
-        durmin = "0" + durmin;
-      }
-      if (dursec < 10) {
-        dursec = "0" + dursec;
-      }
-      if (curmin < 10) {
-        curmin = "0" + curmin;
-      }
-      if (cursec < 10) {
-        cursec = "0" + cursec;
-      }
-      this.duration = durmin + ":" + dursec;
-      this.currentTime = curmin + ":" + cursec;
     },
+    // Update playback position based on progress bar interaction
     updateBar(x) {
-      let progress = this.$refs.progress;
-      let maxduration = this.audio.duration;
-      let position = x - progress.offsetLeft;
-      let percentage = (100 * position) / progress.offsetWidth;
-      if (percentage > 100) {
-        percentage = 100;
-      }
-      if (percentage < 0) {
-        percentage = 0;
-      }
-      this.barWidth = percentage + "%";
-      this.circleLeft = percentage + "%";
-      this.audio.currentTime = (maxduration * percentage) / 100;
+      const progress = this.$refs.progress;
+      const maxDuration = this.audio.duration;
+      const position = x - progress.offsetLeft;
+      const percentage = (100 * position) / progress.offsetWidth;
+      const clampedPercentage = Math.min(Math.max(percentage, 0), 100);
+      this.barWidth = clampedPercentage + "%";
+      this.circleLeft = clampedPercentage + "%";
+      this.audio.currentTime = (maxDuration * clampedPercentage) / 100;
       this.audio.play();
     },
+    // Handle progress bar click or touch events
     clickProgress(e) {
       this.isTimerPlaying = true;
       this.audio.pause();
-      this.updateBar(e.pageX);
+      const x = e.type === "touchstart" ? e.touches[0].pageX : e.pageX;
+      this.updateBar(x);
     },
+    // Switch to the previous track
     prevTrack() {
       this.transitionName = "scale-in";
-      this.isShowCover = false;
-      if (this.currentTrackIndex > 0) {
-        this.currentTrackIndex--;
-      } else {
-        this.currentTrackIndex = this.tracks.length - 1;
-      }
+      this.currentTrackIndex = (this.currentTrackIndex - 1 + this.tracks.length) % this.tracks.length;
       this.currentTrack = this.tracks[this.currentTrackIndex];
       this.resetPlayer();
     },
+    // Switch to the next track
     nextTrack() {
       this.transitionName = "scale-out";
-      this.isShowCover = false;
-      if (this.currentTrackIndex < this.tracks.length - 1) {
-        this.currentTrackIndex++;
-      } else {
-        this.currentTrackIndex = 0;
-      }
+      this.currentTrackIndex = (this.currentTrackIndex + 1) % this.tracks.length;
       this.currentTrack = this.tracks[this.currentTrackIndex];
       this.resetPlayer();
     },
+    // Reset player state for the current track
     resetPlayer() {
       this.barWidth = 0;
       this.circleLeft = 0;
       this.audio.currentTime = 0;
       this.audio.src = this.currentTrack.source;
+      this.audio.load();
       setTimeout(() => {
-        if(this.isTimerPlaying) {
-          this.audio.play();
+        if (this.isTimerPlaying) {
+          this.audio.play().catch((e) => {
+            console.error("Playback failed:", e);
+            this.audioError = "Failed to play audio.";
+          });
         } else {
           this.audio.pause();
         }
       }, 300);
     },
+    // Toggle favorite status of the current track
     favorite() {
-      this.tracks[this.currentTrackIndex].favorited = !this.tracks[
-        this.currentTrackIndex
-      ].favorited;
+      this.tracks[this.currentTrackIndex].favorited = !this.tracks[this.currentTrackIndex].favorited;
+    },
+    // Load tracks from the static/mp3 folder
+    async loadTracks() {
+      const trackCount = 9; // Hardcoded number of tracks (adjust as needed)
+      for (let i = 1; i <= trackCount; i++) {
+        const source = `/static/mp3/${i}.mp3`; // Path to MP3 file
+        const cover = `/static/img/${i}.jpg`; // Default cover image
+        const track = {
+          name: `Track ${i}`,
+          artist: `Artist ${i}`,
+          cover: cover,
+          source: source,
+          favorited: false
+        };
+
+        try {
+          const tags = await this.readMetadata(source);
+          if (tags) {
+            track.name = tags.title || track.name;
+            track.artist = tags.artist || track.artist;
+            if (tags.picture) {
+              const blob = new Blob([new Uint8Array(tags.picture.data)], { type: tags.picture.format });
+              track.cover = URL.createObjectURL(blob);
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to load metadata for ${source}:`, error);
+        }
+
+        this.tracks.push(track);
+      }
+      this.currentTrack = this.tracks[0];
+      this.audio.src = this.currentTrack.source;
+    },
+    // Fetch metadata from an MP3 file using jsmediatags
+    readMetadata(url) {
+      return new Promise((resolve, reject) => {
+        jsmediatags.read(url, {
+          onSuccess: (tag) => resolve(tag.tags),
+          onError: (error) => reject(error)
+        });
+      });
     }
   },
+  // Lifecycle hook: runs when the instance is created
   created() {
-    let vm = this;
-    this.currentTrack = this.tracks[0];
     this.audio = new Audio();
-    this.audio.src = this.currentTrack.source;
-    this.audio.ontimeupdate = function() {
-      vm.generateTime();
-    };
-    this.audio.onloadedmetadata = function() {
-      vm.generateTime();
-    };
-    this.audio.onended = function() {
-      vm.nextTrack();
+    this.audio.ontimeupdate = () => this.generateTime();
+    this.audio.onloadedmetadata = () => this.generateTime();
+    this.audio.onended = () => {
+      this.nextTrack();
       this.isTimerPlaying = true;
     };
-
-    // this is optional (for preload covers)
-    for (let index = 0; index < this.tracks.length; index++) {
-      const element = this.tracks[index];
-      let link = document.createElement('link');
-      link.rel = "prefetch";
-      link.href = element.cover;
-      link.as = "image"
-      document.head.appendChild(link)
-    }
+    this.audio.onerror = () => {
+      this.audioError = "Failed to load audio.";
+    };
+    this.loadTracks();
+  },
+  // Lifecycle hook: runs after the instance is mounted to the DOM
+  mounted() {
+    this.$refs.progress.addEventListener("touchstart", this.clickProgress);
   }
 });
