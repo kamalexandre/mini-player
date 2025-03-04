@@ -1,4 +1,5 @@
 # Mini Player (Flask + Vue.js Edition)
+![image](https://github.com/user-attachments/assets/ed1b1191-f526-4e41-96ae-fa1e4f54d9c3)
 
 Welcome to the **Mini Player** project! This is a lightweight, web-based music player that combines **Flask** (a Python web framework) and **Vue.js** (a JavaScript framework) to deliver a seamless audio experience. Users can play, pause, and navigate through a collection of MP3 tracks, with metadata like track names, artist information, and album art dynamically loaded from the files themselves. If metadata is unavailable, the player falls back to default values and images.
 
